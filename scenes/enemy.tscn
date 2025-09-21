@@ -1,0 +1,42 @@
+[gd_scene load_steps=7 format=3 uid="uid://cyxw86c5ou2iq"]
+
+[ext_resource type="Script" uid="uid://dt7t6awc0fvwa" path="res://scenes/enemy.gd" id="1_enemy"]
+[ext_resource type="Texture2D" uid="uid://dolqc0qqvlobw" path="res://assets/bird1.png" id="2_5uy6h"]
+[ext_resource type="Texture2D" uid="uid://desqlrg0uvb3g" path="res://assets/bird2.png" id="3_c4w8v"]
+[ext_resource type="Texture2D" uid="uid://dt2f2iq3a267l" path="res://assets/bird3.png" id="4_xwavj"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_enemy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_5uy6h")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_c4w8v")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_xwavj")
+}],
+"loop": true,
+"name": &"fly",
+"speed": 6.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_enemy"]
+radius = 32.0
+
+[node name="Enemy" type="CharacterBody2D"]
+z_index = 10
+collision_layer = 4
+script = ExtResource("1_enemy")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_enemy")
+animation = &"fly"
+autoplay = "fly"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_enemy")
+
+[node name="VisibilityNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+rect = Rect2(-50, -50, 100, 100)
