@@ -1,16 +1,13 @@
 class_name Player extends CharacterBody2D
 
-@export var max_leaves: int = 100
-@export var max_speed: int = 300
-
-@onready var leaf_collection_area: Area2D = $LeafCollector
-@onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
-@onready var message_bar: MessageBar = %MessageBar
-
 const JUMP_VELOCITY = -400.0
 const MAX_JUMPS = 4
 const ACCELERATION = 1200.0
 const DECELERATION = 1080.0
+const TOO_MANY_LEAVES_MESSAGE_COOLDOWN: float = 20.0
+
+@export var max_leaves: int = 100
+@export var max_speed: int = 300
 
 var collected_leaves: Array[Leaf] = []
 var facing_direction: int = 1  # 1 for right, -1 for left
@@ -19,13 +16,17 @@ var jump_count: int = 0
 var rotation_angle: float = 0.0
 var rotation_speed: float = 5.0
 
-# Message cooldown tracking, start at -15 so first message can show immediately
+# Message cooldown tracking
 var last_too_many_leaves_message_time: float = -20.0
-const TOO_MANY_LEAVES_MESSAGE_COOLDOWN: float = 20.0
+
+@onready var leaf_collection_area: Area2D = $LeafCollector
+@onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
+@onready var message_bar: MessageBar = %MessageBar
 
 
 func _ready() -> void:
 	leaf_collection_area.body_entered.connect(_on_leaf_collection_area_body_entered)
+
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
@@ -193,11 +194,12 @@ func _animate_leaf_throw(leaf: Leaf, start_pos: Vector2, target_pos: Vector2, th
 	)
 
 	# Apply throw velocity after animation
-	tween.tween_callback(func() -> void:
-		var leaf_obj: Leaf = leaf_ref.get_ref()
-		if leaf_obj != null:
-			var base_throw_velocity := throw_direction * throw_distance * 3.5
-			var combined_velocity := base_throw_velocity + velocity * 0.3
-			combined_velocity.y = min(combined_velocity.y, -200.0)
-			leaf_obj.linear_velocity = combined_velocity
+	tween.tween_callback(
+		func() -> void:
+			var leaf_obj: Leaf = leaf_ref.get_ref()
+			if leaf_obj != null:
+				var base_throw_velocity := throw_direction * throw_distance * 3.5
+				var combined_velocity := base_throw_velocity + velocity * 0.3
+				combined_velocity.y = min(combined_velocity.y, -200.0)
+				leaf_obj.linear_velocity = combined_velocity
 	)

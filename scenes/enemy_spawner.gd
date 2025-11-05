@@ -2,7 +2,7 @@ class_name EnemySpawner extends Node2D
 
 signal enemy_spawned(enemy: Enemy)
 
-@export var enemy_scene: PackedScene  = preload("res://scenes/enemy.tscn")
+@export var enemy_scene: PackedScene = preload("res://scenes/enemy.tscn")
 @export var spawn_interval: float = 5.0  # Start with 1 enemy every 5 seconds
 @export var spawn_acceleration: float = 0.1  # How much faster spawning gets over time
 @export var min_spawn_interval: float = 1.0  # Minimum time between spawns
@@ -12,6 +12,7 @@ signal enemy_spawned(enemy: Enemy)
 var time_since_last_spawn: float = 0.0
 var game_time: float = 0.0
 var active_enemies: Array[Enemy] = []
+
 
 func _process(delta: float) -> void:
 	game_time += delta

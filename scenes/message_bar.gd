@@ -1,13 +1,14 @@
 class_name MessageBar extends Control
 
-@onready var background: ColorRect = $ColorRect
-@onready var label: Label = $ColorRect/Label
-
 # Message queue and tracking
 var message_queue: Array[String] = []
 var current_message: String = ""
 var is_animating: bool = false
 var current_tween: Tween
+
+@onready var background: ColorRect = $ColorRect
+@onready var label: Label = $ColorRect/Label
+
 
 func _ready() -> void:
 	modulate.a = 0.0

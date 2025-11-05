@@ -5,9 +5,6 @@ signal enemy_hit_player(enemy: Enemy)
 @export var base_speed: float = 150.0
 @export var arc_strength: float = 50.0
 
-@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
-@onready var visibility_notifier: VisibleOnScreenNotifier2D = $VisibilityNotifier2D
-
 var direction: int = 1  # 1 for moving right, -1 for moving left
 var player_node: Player
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -18,6 +15,10 @@ var charge_velocity: Vector2 = Vector2.ZERO
 var time_off_screen: float = 0.0
 var is_off_screen: bool = false
 
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var visibility_notifier: VisibleOnScreenNotifier2D = $VisibilityNotifier2D
+
+
 func _ready() -> void:
 	initial_y = global_position.y
 
@@ -27,6 +28,7 @@ func _ready() -> void:
 
 	# Start the flying animation
 	animated_sprite.play("fly")
+
 
 func set_player(player: Player) -> void:
 	player_node = player
@@ -54,7 +56,7 @@ func _physics_process(delta: float) -> void:
 			var charge_direction: Vector2 = (player_pos - global_position).normalized()
 			charge_velocity = charge_direction * base_speed * 2.25
 		else:
-		# Add subtle curve toward player when not charging
+			# Add subtle curve toward player when not charging
 			var y_diff: float = player_pos.y - global_position.y
 			var curve_force: float = (y_diff / distance_to_player) * arc_strength * 0.3
 			velocity.y += curve_force * delta
@@ -106,6 +108,7 @@ func _on_screen_exited() -> void:
 	# Mark as off screen but don't cleanup immediately
 	is_off_screen = true
 	time_off_screen = 0.0
+
 
 func _on_screen_entered() -> void:
 	# Reset off-screen timer when enemy comes back into view

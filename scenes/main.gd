@@ -2,6 +2,11 @@ extends Node
 
 @export var win_count: int = 250
 
+var burning_count: int = 0
+var game_time: float = 0.0
+var speed_boost_amount: int = 100
+var speed_boosts_applied: int = 0
+
 @onready var burning_leaves_label: Label = %BurningLeaves
 @onready var left_furnace_area: Area2D = %LeftFurnaceArea
 @onready var right_furnace_area: Area2D = %RightFurnaceArea
@@ -9,11 +14,6 @@ extends Node
 @onready var enemy_spawner: EnemySpawner = $EnemySpawner
 @onready var player: Player = $Player
 @onready var message_bar: MessageBar = %MessageBar
-
-var burning_count: int = 0
-var game_time: float = 0.0
-var speed_boost_amount: int = 100
-var speed_boosts_applied: int = 0
 
 
 func _ready() -> void:
