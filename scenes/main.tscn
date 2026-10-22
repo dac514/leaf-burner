@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=4 uid="uid://350ge72hu5rh"]
+[gd_scene format=4 uid="uid://350ge72hu5rh"]
 
 [ext_resource type="Texture2D" uid="uid://lpq5re2mggdd" path="res://assets/backround.png" id="3_yc10j"]
 [ext_resource type="Script" uid="uid://drk8fwf4q2kgd" path="res://scenes/player.gd" id="4_4c57u"]
@@ -60,7 +60,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("13_cjqg0")
 }],
-"loop": true,
+"loop": 1,
 "name": &"default",
 "speed": 7.0
 }]
@@ -105,7 +105,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("14_y6deb")
 }],
-"loop": true,
+"loop": 1,
 "name": &"default",
 "speed": 7.0
 }, {
@@ -113,7 +113,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("15_og1vs")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 5.0
 }, {
@@ -124,7 +124,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("17_gqmmt")
 }],
-"loop": true,
+"loop": 1,
 "name": &"jump",
 "speed": 5.0
 }]
@@ -199,51 +199,51 @@ size = Vector2(231.75, 800)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_85g3d"]
 size = Vector2(232, 800)
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=441987697]
 script = ExtResource("9_main")
 
-[node name="LeafSpawner" type="Node2D" parent="."]
+[node name="LeafSpawner" type="Node2D" parent="." unique_id=588091961]
 script = ExtResource("8_tipki")
 
-[node name="EnemySpawner" type="Node2D" parent="."]
+[node name="EnemySpawner" type="Node2D" parent="." unique_id=912892164]
 script = ExtResource("8_enemy_spawner")
 
-[node name="Player" type="CharacterBody2D" parent="."]
+[node name="Player" type="CharacterBody2D" parent="." unique_id=816200650]
 z_index = 1
 position = Vector2(576, 534)
 collision_mask = 29
 script = ExtResource("4_4c57u")
 
-[node name="Shadow" type="AnimatedSprite2D" parent="Player"]
+[node name="Shadow" type="AnimatedSprite2D" parent="Player" unique_id=2112575334]
 scale = Vector2(0.27, 0.27)
 sprite_frames = SubResource("SpriteFrames_cjqg0")
 autoplay = "default"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=882164673]
 shape = SubResource("CapsuleShape2D_gqmmt")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player"]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player" unique_id=1986844921]
 material = SubResource("ShaderMaterial_gqmmt")
 sprite_frames = SubResource("SpriteFrames_splo0")
 animation = &"idle"
 
-[node name="Camera2D" type="Camera2D" parent="Player"]
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=938801438]
 position = Vector2(0, -212)
 limit_top = -1
 drag_vertical_enabled = true
 drag_top_margin = 1.0
 drag_bottom_margin = 1.0
 
-[node name="LeafCollector" type="Area2D" parent="Player"]
+[node name="LeafCollector" type="Area2D" parent="Player" unique_id=1596290554]
 scale = Vector2(5, 5)
 collision_mask = 3
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/LeafCollector"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/LeafCollector" unique_id=2025187204]
 shape = SubResource("CircleShape2D_85g3d")
 
-[node name="Hud" type="CanvasLayer" parent="."]
+[node name="Hud" type="CanvasLayer" parent="." unique_id=1702629896]
 
-[node name="BurningLeaves" type="Label" parent="Hud"]
+[node name="BurningLeaves" type="Label" parent="Hud" unique_id=431936920]
 unique_name_in_owner = true
 offset_left = 875.0
 offset_top = 12.0
@@ -253,7 +253,7 @@ text = "0 "
 label_settings = SubResource("LabelSettings_tipki")
 horizontal_alignment = 2
 
-[node name="MessageBar" type="Control" parent="Hud"]
+[node name="MessageBar" type="Control" parent="Hud" unique_id=785583246]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -263,7 +263,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("10_choun")
 
-[node name="ColorRect" type="ColorRect" parent="Hud/MessageBar"]
+[node name="ColorRect" type="ColorRect" parent="Hud/MessageBar" unique_id=1643861159]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -278,7 +278,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="Label" type="Label" parent="Hud/MessageBar/ColorRect"]
+[node name="Label" type="Label" parent="Hud/MessageBar/ColorRect" unique_id=1459282008]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -294,94 +294,94 @@ grow_vertical = 2
 text = "Leaf Burner"
 label_settings = SubResource("LabelSettings_85g3d")
 
-[node name="WildJamLogo" type="Sprite2D" parent="Hud"]
+[node name="WildJamLogo" type="Sprite2D" parent="Hud" unique_id=189544834]
 position = Vector2(100, 84)
 texture = ExtResource("25_j8jky")
 
-[node name="Enclosure" type="Node" parent="."]
+[node name="Enclosure" type="Node" parent="." unique_id=277144519]
 
-[node name="Walls" type="StaticBody2D" parent="Enclosure"]
+[node name="Walls" type="StaticBody2D" parent="Enclosure" unique_id=493736361]
 collision_layer = 4
 collision_mask = 29
 
-[node name="LeftWall" type="CollisionShape2D" parent="Enclosure/Walls"]
+[node name="LeftWall" type="CollisionShape2D" parent="Enclosure/Walls" unique_id=945611105]
 position = Vector2(-911.25, 244)
 shape = SubResource("RectangleShape2D_furnace_left")
 
-[node name="RightWall" type="CollisionShape2D" parent="Enclosure/Walls"]
+[node name="RightWall" type="CollisionShape2D" parent="Enclosure/Walls" unique_id=1806745555]
 position = Vector2(2447.5, 244)
 shape = SubResource("RectangleShape2D_furnace_right")
 
-[node name="Ceiling" type="CollisionShape2D" parent="Enclosure/Walls"]
+[node name="Ceiling" type="CollisionShape2D" parent="Enclosure/Walls" unique_id=1258002895]
 position = Vector2(768, -176.75)
 shape = SubResource("RectangleShape2D_pm3ni")
 
-[node name="Floors" type="StaticBody2D" parent="Enclosure"]
+[node name="Floors" type="StaticBody2D" parent="Enclosure" unique_id=122720501]
 collision_layer = 8
 collision_mask = 31
 
-[node name="Floor" type="CollisionShape2D" parent="Enclosure/Floors"]
+[node name="Floor" type="CollisionShape2D" parent="Enclosure/Floors" unique_id=1902436021]
 position = Vector2(0, 8)
 shape = SubResource("WorldBoundaryShape2D_tipki")
 
-[node name="Scenery" type="Node" parent="."]
+[node name="Scenery" type="Node" parent="." unique_id=1078016181]
 
-[node name="Sky" type="Parallax2D" parent="Scenery"]
+[node name="Sky" type="Parallax2D" parent="Scenery" unique_id=1925410506]
 scroll_scale = Vector2(0.3, 1)
 repeat_size = Vector2(1296, 0)
 
-[node name="Sprite2D" type="Sprite2D" parent="Scenery/Sky"]
+[node name="Sprite2D" type="Sprite2D" parent="Scenery/Sky" unique_id=894834962]
 position = Vector2(648, 266)
 texture = ExtResource("3_yc10j")
 
-[node name="Forest" type="Parallax2D" parent="Scenery"]
+[node name="Forest" type="Parallax2D" parent="Scenery" unique_id=397525676]
 scroll_scale = Vector2(0.7, 1)
 repeat_size = Vector2(1152, 0)
 
-[node name="Tree Red" type="Sprite2D" parent="Scenery/Forest"]
+[node name="Tree Red" type="Sprite2D" parent="Scenery/Forest" unique_id=77345528]
 position = Vector2(984, 372)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("5_ya4ey")
 
-[node name="Tree Yellow" type="Sprite2D" parent="Scenery/Forest"]
+[node name="Tree Yellow" type="Sprite2D" parent="Scenery/Forest" unique_id=67839782]
 position = Vector2(594, 321)
 texture = ExtResource("4_choun")
 
-[node name="Tree Green" type="Sprite2D" parent="Scenery/Forest"]
+[node name="Tree Green" type="Sprite2D" parent="Scenery/Forest" unique_id=298939360]
 position = Vector2(181, 300)
 texture = ExtResource("21_y6deb")
 
-[node name="Bush" type="Sprite2D" parent="Scenery/Forest"]
+[node name="Bush" type="Sprite2D" parent="Scenery/Forest" unique_id=2008179117]
 position = Vector2(394, 300)
 texture = ExtResource("24_yq6so")
 
-[node name="Small Rock" type="Sprite2D" parent="Scenery"]
+[node name="Small Rock" type="Sprite2D" parent="Scenery" unique_id=2077124670]
 position = Vector2(834, 300)
 texture = ExtResource("23_2f3dj")
 
-[node name="Big Rock" type="Sprite2D" parent="Scenery"]
+[node name="Big Rock" type="Sprite2D" parent="Scenery" unique_id=832294653]
 position = Vector2(-532, 300)
 texture = ExtResource("22_vxglm")
 
-[node name="Big Rock Right" type="Sprite2D" parent="Scenery"]
+[node name="Big Rock Right" type="Sprite2D" parent="Scenery" unique_id=549110691]
 position = Vector2(2111.9998, 384.99997)
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("22_vxglm")
 flip_h = true
 
-[node name="Terrain" type="TileMapLayer" parent="Scenery"]
+[node name="Terrain" type="TileMapLayer" parent="Scenery" unique_id=1314850919]
 z_index = 2
 position = Vector2(0, 8)
 tile_map_data = PackedByteArray("AAAAAAkAAAAAAAAAAAABAAkAAAAAAAAAAAACAAkAAAAAAAAAAAADAAkAAAAAAAAAAAAEAAkAAAAAAAAAAAAFAAkAAAAAAAAAAAAGAAkAAAAAAAAAAAAHAAkAAAAAAAAAAAAIAAkAAAAAAAAAAAAJAAkAAAAAAAAAAAAKAAkAAAAAAAAAAAALAAkAAAAAAAAAAAAMAAkAAAAAAAAAAAANAAkAAAAAAAAAAAAOAAkAAAAAAAAAAAAPAAkAAAAAAAAAAAAQAAkAAAAAAAAAAAARAAkAAAAAAAAAAAD+/wkAAAAAAAAAAAD//wkAAAAAAAAAAAD9/wkAAAAAAAAAAAD8/wkAAAAAAAAAAAD7/wkAAAAAAAAAAAD6/wkAAAAAAAAAAAD5/wkAAAAAAAAAAAD4/wkAAAAAAAAAAAD3/wkAAAAAAAAAAAD2/wkAAAAAAAAAAAD1/wkAAAAAAAAAAAD0/wkAAAAAAAAAAADz/wkAAAAAAAAAAADy/wkAAAAAAAAAAAASAAkAAAAAAAAAAAATAAkAAAAAAAAAAAAUAAkAAAAAAAAAAAAVAAkAAAAAAAAAAAAWAAkAAAAAAAAAAAAXAAkAAAAAAAAAAAAYAAkAAAAAAAAAAAAZAAkAAAAAAAAAAAAaAAkAAAAAAAAAAAAbAAkAAAAAAAAAAAAcAAkAAAAAAAAAAAAdAAkAAAAAAAAAAAAeAAkAAAAAAAAAAAAfAAkAAAAAAAAAAAAgAAkAAAAAAAAAAAAhAAkAAAAAAAAAAAAiAAkAAAAAAAAAAAAjAAkAAAAAAAAAAAAkAAkAAAAAAAAAAAAlAAkAAAAAAAAAAADx/wkAAAAAAAAAAADw/wkAAAAAAAAAAADv/wkAAAAAAAAAAADu/wkAAAAAAAAAAADt/wkAAAAAAAAAAAAmAAkAAAAAAAAAAAAnAAkAAAAAAAAAAAAoAAkAAAAAAAAAAAApAAkAAAAAAAAAAAAqAAkAAAAAAAAAAADs/wkAAAAAAAAAAADr/wkAAAAAAAAAAADq/wkAAAAAAAAAAADp/wkAAAAAAAAAAADo/wkAAAAAAAAAAADn/wkAAAAAAAAAAADm/wkAAAAAAAAAAAArAAkAAAAAAAAAAAAsAAkAAAAAAAAAAAAtAAkAAAAAAAAAAAAuAAkAAAAAAAAAAAAvAAkAAAAAAAAAAAAwAAkAAAAAAAAAAAAxAAkAAAAAAAAAAAAyAAkAAAAAAAAAAAA=")
 tile_set = SubResource("TileSet_xehqc")
 collision_enabled = false
 
-[node name="LeftBarrel" parent="Scenery" instance=ExtResource("19_gqmmt")]
+[node name="LeftBarrel" parent="Scenery" unique_id=409226622 instance=ExtResource("19_gqmmt")]
 z_index = 3
 position = Vector2(-967, 523)
 autoplay = "default"
 
-[node name="Smoke" type="GPUParticles2D" parent="Scenery/LeftBarrel"]
+[node name="Smoke" type="GPUParticles2D" parent="Scenery/LeftBarrel" unique_id=25766675]
 z_index = -1
 position = Vector2(1, -4)
 amount = 30
@@ -389,24 +389,24 @@ texture = ExtResource("23_pm3ni")
 lifetime = 4.5
 process_material = SubResource("ParticleProcessMaterial_2wyq8")
 
-[node name="LeftFurnaceArea" type="Area2D" parent="Scenery/LeftBarrel"]
+[node name="LeftFurnaceArea" type="Area2D" parent="Scenery/LeftBarrel" unique_id=1709568570]
 unique_name_in_owner = true
 position = Vector2(-75.5, -265)
 collision_layer = 16
 collision_mask = 31
 
-[node name="LeftFurnaceShape" type="CollisionShape2D" parent="Scenery/LeftBarrel/LeftFurnaceArea"]
+[node name="LeftFurnaceShape" type="CollisionShape2D" parent="Scenery/LeftBarrel/LeftFurnaceArea" unique_id=572184891]
 unique_name_in_owner = true
 position = Vector2(-33.625, -10)
 shape = SubResource("RectangleShape2D_tipki")
 
-[node name="RightBarrel" parent="Scenery" instance=ExtResource("19_gqmmt")]
+[node name="RightBarrel" parent="Scenery" unique_id=1622591087 instance=ExtResource("19_gqmmt")]
 z_index = 3
 position = Vector2(2501, 522)
 autoplay = "default"
 flip_h = true
 
-[node name="Smoke" type="GPUParticles2D" parent="Scenery/RightBarrel"]
+[node name="Smoke" type="GPUParticles2D" parent="Scenery/RightBarrel" unique_id=1715137544]
 z_index = -1
 position = Vector2(2, -6)
 amount = 30
@@ -414,13 +414,13 @@ texture = ExtResource("23_pm3ni")
 lifetime = 4.5
 process_material = SubResource("ParticleProcessMaterial_2wyq8")
 
-[node name="RightFurnaceArea" type="Area2D" parent="Scenery/RightBarrel"]
+[node name="RightFurnaceArea" type="Area2D" parent="Scenery/RightBarrel" unique_id=1862188459]
 unique_name_in_owner = true
 position = Vector2(78, -266)
 collision_layer = 16
 collision_mask = 31
 
-[node name="RightFurnaceShape" type="CollisionShape2D" parent="Scenery/RightBarrel/RightFurnaceArea"]
+[node name="RightFurnaceShape" type="CollisionShape2D" parent="Scenery/RightBarrel/RightFurnaceArea" unique_id=504055486]
 unique_name_in_owner = true
 position = Vector2(35, -8)
 shape = SubResource("RectangleShape2D_85g3d")
