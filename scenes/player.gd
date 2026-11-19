@@ -6,6 +6,12 @@ const ACCELERATION = 1200.0
 const DECELERATION = 1080.0
 const TOO_MANY_LEAVES_MESSAGE_COOLDOWN: float = 20.0
 const JOYSTICK_DEADZONE := 0.2
+# Jumping by angle, so one thumb can run and jump: tip the stick about 30 degrees up to jump,
+# drop back toward level to re-arm, rock up again to jump again (keys work the same way)
+const JUMP_PRESS_SHARE: float = 0.5  # Share of the tilt pointing up needed to jump (0.5 = 30 degrees)
+const JUMP_REARM_SHARE: float = 0.3  # Back below this (about 17 degrees) and the next rock jumps again
+const JUMP_MIN_TILT: float = 0.25  # Ignore tiny stick wobbles near the centre
+const JUMP_BUFFER_TIME: float = 0.12  # A jump pressed this long before landing still happens
 
 # Leaf swirl: a tilted, breathing whirlwind that trails the elf
 const ORBIT_BASE_RADIUS: float = 68.0
@@ -38,6 +44,8 @@ var collected_leaves: Array[Leaf] = []
 var facing_direction: int = 1  # 1 for right, -1 for left
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var jump_count: int = 0
+var jump_armed: bool = true
+var jump_buffer_time: float = 0.0
 var rotation_angle: float = 0.0
 var rotation_speed: float = 5.0
 var spin_boost: float = 1.0
@@ -90,14 +98,20 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("throw_leaves"):
 		throw_leaves()
 
-	# Handle jump
-	if Input.is_action_just_pressed("move_up") and jump_count < MAX_JUMPS:
+	# Handle jump (buffered, so a press just before landing still counts)
+	if _read_jump_press():
+		jump_buffer_time = JUMP_BUFFER_TIME
+	if jump_buffer_time > 0.0 and jump_count < MAX_JUMPS:
 		velocity.y = JUMP_VELOCITY
 		jump_count += 1
+		jump_buffer_time = 0.0
+	else:
+		jump_buffer_time = maxf(0.0, jump_buffer_time - delta)
 
-	# Handle direction
+	# Handle direction: any tilt past the deadzone runs at full speed, like a key
 	var direction := Input.get_axis("move_left", "move_right")
-	if abs(direction) > JOYSTICK_DEADZONE:
+	direction = signf(direction) if absf(direction) > JOYSTICK_DEADZONE else 0.0
+	if direction:
 		var desired_velocity_x: float = direction * max_speed
 		velocity.x = move_toward(velocity.x, desired_velocity_x, ACCELERATION * delta)
 		facing_direction = sign(direction)
@@ -147,6 +161,21 @@ func _on_leaf_collection_area_body_entered(body: Node2D) -> void:
 			if current_time - last_too_many_leaves_message_time >= TOO_MANY_LEAVES_MESSAGE_COOLDOWN:
 				message_bar.set_text("You're carrying too many leaves, throw them!")
 				last_too_many_leaves_message_time = current_time
+
+
+## True once per jump press. Works on the stick's angle rather than on "up" alone,
+## so rocking the thumb up and back jumps repeatedly while still holding a direction.
+func _read_jump_press() -> bool:
+	var up: float = Input.get_action_strength("move_up")
+	var stick := Vector2(Input.get_axis("move_left", "move_right"), -up)
+	var up_share: float = up / stick.length() if stick.length() >= JUMP_MIN_TILT else 0.0
+	if up_share <= JUMP_REARM_SHARE:
+		jump_armed = true
+	if jump_armed and up_share >= JUMP_PRESS_SHARE:
+		jump_armed = false
+		return true
+	# A key tapped and released inside a single frame never shows up in the strength
+	return Input.is_action_just_pressed("move_up") and up < JOYSTICK_DEADZONE
 
 
 ## Update player outline based on collected leaves count
