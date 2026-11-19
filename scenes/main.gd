@@ -15,6 +15,8 @@ var progress_level_up_playing: bool = false
 var level_badge_tween: Tween
 var spark_emitters: Array[CPUParticles2D] = []
 var next_spark_emitter: int = 0
+var perf_label: Label
+var perf_refresh_time: float = 0.0
 
 @onready var burning_leaves_label: Label = %BurningLeaves
 @onready var progress_bar: ProgressBar = %ProgressBar
@@ -37,6 +39,7 @@ func _ready() -> void:
 	leaf_spawner.left_bound_x = (left_furnace_area.get_parent() as Node2D).global_position.x
 	leaf_spawner.right_bound_x = (right_furnace_area.get_parent() as Node2D).global_position.x
 	_create_spark_emitters()
+	_create_perf_overlay()
 
 	await get_tree().create_timer(3.0).timeout
 	message_bar.set_text("Burn " + str(win_count) + " leaves to win! ")
@@ -44,6 +47,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	game_time += delta
+	if perf_label:
+		_update_perf_overlay(delta)
 	# Check for speed increases every 30 seconds, max 10 boosts
 	var expected_boosts: int = int(game_time / 30.0)
 	if expected_boosts > speed_boosts_applied and speed_boosts_applied <= 10:
@@ -183,3 +188,32 @@ func _emit_sparks(at: Vector2) -> void:
 	next_spark_emitter = (next_spark_emitter + 1) % spark_emitters.size()
 	sparks.global_position = at
 	sparks.restart()
+
+
+## Debug readout for tuning on devices: fps, live leaves, active renderer.
+## Shown in debug builds on phones/tablets, or on desktop with `-- --show-fps`.
+func _create_perf_overlay() -> void:
+	var on_mobile_debug: bool = OS.is_debug_build() and OS.has_feature("mobile")
+	if not on_mobile_debug and not "--show-fps" in OS.get_cmdline_user_args():
+		return
+	perf_label = Label.new()
+	perf_label.position = Vector2(16, 150)
+	var settings := LabelSettings.new()
+	settings.font_size = 18
+	settings.font_color = Color(1.0, 0.945, 0.84)
+	settings.outline_size = 4
+	settings.outline_color = Color(0.08, 0.04, 0.02)
+	perf_label.label_settings = settings
+	$Hud.add_child(perf_label)
+
+
+func _update_perf_overlay(delta: float) -> void:
+	perf_refresh_time -= delta
+	if perf_refresh_time > 0.0:
+		return
+	perf_refresh_time = 0.5
+	perf_label.text = "%d fps · %d leaves · %s" % [
+		Engine.get_frames_per_second(),
+		leaf_spawner.active_leaves.size(),
+		RenderingServer.get_current_rendering_method(),
+	]
