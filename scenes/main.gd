@@ -9,7 +9,6 @@ var game_time: float = 0.0
 var speed_boost_amount: int = 100
 var speed_boosts_applied: int = 0
 var level: int = 0
-var level_start: int = 0  # Score where the current level's progress bar starts
 var progress_tween: Tween
 var progress_level_up_playing: bool = false
 var level_badge_tween: Tween
@@ -107,7 +106,6 @@ func _on_game_won() -> void:
 	message_bar.set_text("You win!")
 	message_bar.set_text(str(win_count) + " leaves in " + time_string)
 	level += 1
-	level_start = win_count
 	win_count += win_count
 	_show_level()
 	_update_progress_bar(true)
@@ -116,7 +114,7 @@ func _on_game_won() -> void:
 	message_bar.set_text("Burn " + str(win_count) + " leaves to win! ")
 
 
-## Bar shows progress through the current level, e.g. 250 -> 500 on level 1
+## Bar shows score from zero to the next target (0 -> 500 on level 1), so owl hits always show
 func _update_progress_bar(level_up: bool = false) -> void:
 	if progress_level_up_playing and not level_up:
 		return  # Let the level-up animation finish, it catches up at the end
@@ -131,8 +129,7 @@ func _update_progress_bar(level_up: bool = false) -> void:
 		progress_tween.tween_property(progress_bar, "value", 0.0, 0.0)
 		progress_tween.tween_callback(_on_level_up_bar_finished)
 		return
-	var level_size: float = float(win_count - level_start)
-	var target_value: float = clamp((burning_count - level_start) / level_size * 100.0, 0.0, 100.0)
+	var target_value: float = clamp(float(burning_count) / win_count * 100.0, 0.0, 100.0)
 	progress_tween.tween_property(progress_bar, "value", target_value, 0.3)
 
 
