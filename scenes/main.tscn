@@ -33,6 +33,7 @@
 [ext_resource type="Texture2D" uid="uid://b05r80vynivjq" path="res://assets/rock2.png" id="22_vxglm"]
 [ext_resource type="Texture2D" uid="uid://c3ji0owx1l4ss" path="res://assets/rock1.png" id="23_2f3dj"]
 [ext_resource type="Texture2D" uid="uid://c06sqdg37kf3o" path="res://assets/smoke_02.png" id="23_pm3ni"]
+[ext_resource type="PackedScene" uid="uid://bxgd5847pqd2w" path="res://scenes/progress_bar.tscn" id="24_kmb1v"]
 [ext_resource type="Texture2D" uid="uid://dpxxjjiykgdym" path="res://assets/bush.png" id="24_yq6so"]
 [ext_resource type="Texture2D" uid="uid://cdy733gg62vxc" path="res://assets/GWJ-Half-Logo-Orange.svg" id="25_j8jky"]
 
@@ -140,6 +141,9 @@ shadow_color = Color(0.37036446, 0.3703645, 0.37036446, 0)
 
 [sub_resource type="LabelSettings" id="LabelSettings_85g3d"]
 font_size = 42
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_j8jky"]
+size = Vector2(384, 324)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_furnace_left"]
 size = Vector2(37.5, 800)
@@ -253,6 +257,14 @@ text = "0 "
 label_settings = SubResource("LabelSettings_tipki")
 horizontal_alignment = 2
 
+[node name="ProgressBar" parent="Hud" unique_id=1615075237 instance=ExtResource("24_kmb1v")]
+unique_name_in_owner = true
+offset_left = 878.0
+offset_top = 140.0
+offset_right = 1128.0
+offset_bottom = 164.41325
+show_percentage = false
+
 [node name="MessageBar" type="Control" parent="Hud" unique_id=785583246]
 unique_name_in_owner = true
 layout_mode = 3
@@ -297,6 +309,23 @@ label_settings = SubResource("LabelSettings_85g3d")
 [node name="WildJamLogo" type="Sprite2D" parent="Hud" unique_id=189544834]
 position = Vector2(100, 84)
 texture = ExtResource("25_j8jky")
+
+[node name="VirtualJoystick" type="VirtualJoystick" parent="Hud" unique_id=2119331571]
+unique_name_in_owner = true
+offset_left = 1037.0
+offset_top = 550.0
+offset_right = 1077.0
+offset_bottom = 590.0
+action_left = &"move_left"
+action_right = &"move_right"
+action_up = &"move_up"
+action_down = &""
+
+[node name="TouchScreenButton" type="TouchScreenButton" parent="Hud/VirtualJoystick" unique_id=1696279675]
+unique_name_in_owner = true
+position = Vector2(-844, -66)
+shape = SubResource("RectangleShape2D_j8jky")
+action = "throw_leaves"
 
 [node name="Enclosure" type="Node" parent="." unique_id=277144519]
 

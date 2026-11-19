@@ -8,6 +8,7 @@ var speed_boost_amount: int = 100
 var speed_boosts_applied: int = 0
 
 @onready var burning_leaves_label: Label = %BurningLeaves
+@onready var progress_bar: ProgressBar = %ProgressBar
 @onready var left_furnace_area: Area2D = %LeftFurnaceArea
 @onready var right_furnace_area: Area2D = %RightFurnaceArea
 @onready var leaf_spawner: LeafSpawner = $LeafSpawner
@@ -51,6 +52,7 @@ func _on_enemy_hit_player(_enemy: Enemy) -> void:
 	# Reduce burning leaves count by 100
 	burning_count = max(0, burning_count - 100)
 	burning_leaves_label.text = str(burning_count)
+	_update_progress_bar()
 	message_bar.set_text("Hit by enemy! Lost 100 points!")
 
 
@@ -62,6 +64,7 @@ func _on_enemy_spawned(enemy: Enemy) -> void:
 func _on_leaf_burned(_leaf: Leaf) -> void:
 	burning_count += 1
 	burning_leaves_label.text = str(burning_count)
+	_update_progress_bar()
 	# Check win condition
 	if burning_count >= win_count:
 		_on_game_won()
@@ -82,5 +85,12 @@ func _on_game_won() -> void:
 	message_bar.set_text("You win!")
 	message_bar.set_text(str(win_count) + " leaves in " + time_string)
 	win_count += win_count
+	_update_progress_bar()
 	message_bar.set_text("Keep going!")
 	message_bar.set_text("Burn " + str(win_count) + " leaves to win! ")
+
+
+func _update_progress_bar() -> void:
+	var target_value: float = clamp((float(burning_count) / win_count) * 100.0, 0.0, 100.0)
+	var tween := get_tree().create_tween()
+	tween.tween_property(progress_bar, "value", target_value, 0.3)

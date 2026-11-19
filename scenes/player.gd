@@ -5,6 +5,7 @@ const MAX_JUMPS = 4
 const ACCELERATION = 1200.0
 const DECELERATION = 1080.0
 const TOO_MANY_LEAVES_MESSAGE_COOLDOWN: float = 20.0
+const JOYSTICK_DEADZONE := 0.2
 
 @export var max_leaves: int = 100
 @export var max_speed: int = 300
@@ -22,10 +23,15 @@ var last_too_many_leaves_message_time: float = -20.0
 @onready var leaf_collection_area: Area2D = $LeafCollector
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var message_bar: MessageBar = %MessageBar
+@onready var joystick: VirtualJoystick = %VirtualJoystick
+@onready var throwButton: TouchScreenButton = %TouchScreenButton
 
 
 func _ready() -> void:
 	leaf_collection_area.body_entered.connect(_on_leaf_collection_area_body_entered)
+	var is_mobile: bool = DisplayServer.is_touchscreen_available()
+	joystick.visible = is_mobile
+	throwButton.visible = is_mobile
 
 
 func _physics_process(delta: float) -> void:
@@ -47,10 +53,10 @@ func _physics_process(delta: float) -> void:
 
 	# Handle direction
 	var direction := Input.get_axis("move_left", "move_right")
-	if direction:
+	if abs(direction) > JOYSTICK_DEADZONE:
 		var desired_velocity_x: float = direction * max_speed
 		velocity.x = move_toward(velocity.x, desired_velocity_x, ACCELERATION * delta)
-		facing_direction = int(direction)
+		facing_direction = sign(direction)
 		animated_sprite_2d.flip_h = direction > 0
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, DECELERATION * delta)
