@@ -139,6 +139,31 @@ outline_color = Color(0.00011382803, 0.00011382803, 0.00011382803, 1)
 shadow_size = 6
 shadow_color = Color(0.37036446, 0.3703645, 0.37036446, 0)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_level_badge"]
+content_margin_left = 12.0
+content_margin_top = 3.0
+content_margin_right = 12.0
+content_margin_bottom = 3.0
+bg_color = Color(0.16, 0.09, 0.05, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.76, 0.35, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 3
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_level_badge"]
+font_size = 20
+font_color = Color(1, 0.945, 0.84, 1)
+outline_size = 4
+outline_color = Color(0.08, 0.04, 0.02, 1)
+
 [sub_resource type="LabelSettings" id="LabelSettings_85g3d"]
 font_size = 42
 
@@ -263,7 +288,24 @@ offset_left = 878.0
 offset_top = 140.0
 offset_right = 1128.0
 offset_bottom = 164.41325
-show_percentage = false
+
+[node name="LevelBadge" type="PanelContainer" parent="Hud" unique_id=1873402219]
+unique_name_in_owner = true
+visible = false
+offset_left = 1128.0
+offset_top = 176.0
+offset_right = 1128.0
+offset_bottom = 206.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_level_badge")
+
+[node name="LevelLabel" type="Label" parent="Hud/LevelBadge" unique_id=1290455318]
+unique_name_in_owner = true
+layout_mode = 2
+text = "LEVEL 1"
+label_settings = SubResource("LabelSettings_level_badge")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="MessageBar" type="Control" parent="Hud" unique_id=785583246]
 unique_name_in_owner = true

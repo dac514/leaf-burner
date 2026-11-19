@@ -6,9 +6,16 @@ var burning_count: int = 0
 var game_time: float = 0.0
 var speed_boost_amount: int = 100
 var speed_boosts_applied: int = 0
+var level: int = 0
+var level_start: int = 0  # Score where the current level's progress bar starts
+var progress_tween: Tween
+var progress_level_up_playing: bool = false
+var level_badge_tween: Tween
 
 @onready var burning_leaves_label: Label = %BurningLeaves
 @onready var progress_bar: ProgressBar = %ProgressBar
+@onready var level_badge: PanelContainer = %LevelBadge
+@onready var level_label: Label = %LevelLabel
 @onready var left_furnace_area: Area2D = %LeftFurnaceArea
 @onready var right_furnace_area: Area2D = %RightFurnaceArea
 @onready var leaf_spawner: LeafSpawner = $LeafSpawner
@@ -87,13 +94,49 @@ func _on_game_won() -> void:
 	message_bar.message_queue = []
 	message_bar.set_text("You win!")
 	message_bar.set_text(str(win_count) + " leaves in " + time_string)
+	level += 1
+	level_start = win_count
 	win_count += win_count
-	_update_progress_bar()
+	_show_level()
+	_update_progress_bar(true)
+	message_bar.set_text("Level " + str(level) + "!")
 	message_bar.set_text("Keep going!")
 	message_bar.set_text("Burn " + str(win_count) + " leaves to win! ")
 
 
-func _update_progress_bar() -> void:
-	var target_value: float = clamp((float(burning_count) / win_count) * 100.0, 0.0, 100.0)
-	var tween := get_tree().create_tween()
-	tween.tween_property(progress_bar, "value", target_value, 0.3)
+## Bar shows progress through the current level, e.g. 250 -> 500 on level 1
+func _update_progress_bar(level_up: bool = false) -> void:
+	if progress_level_up_playing and not level_up:
+		return  # Let the level-up animation finish, it catches up at the end
+	if progress_tween:
+		progress_tween.kill()
+	progress_tween = create_tween()
+	if level_up:
+		# Top the bar off, then start the new level from empty
+		progress_level_up_playing = true
+		progress_tween.tween_property(progress_bar, "value", 100.0, 0.15)
+		progress_tween.tween_interval(0.35)
+		progress_tween.tween_property(progress_bar, "value", 0.0, 0.0)
+		progress_tween.tween_callback(_on_level_up_bar_finished)
+		return
+	var level_size: float = float(win_count - level_start)
+	var target_value: float = clamp((burning_count - level_start) / level_size * 100.0, 0.0, 100.0)
+	progress_tween.tween_property(progress_bar, "value", target_value, 0.3)
+
+
+func _on_level_up_bar_finished() -> void:
+	progress_level_up_playing = false
+	_update_progress_bar()
+
+
+func _show_level() -> void:
+	level_label.text = "LEVEL " + str(level)
+	level_badge.visible = true
+	level_badge.pivot_offset = level_badge.get_combined_minimum_size() / 2.0
+	if level_badge_tween:
+		level_badge_tween.kill()
+	level_badge.scale = Vector2(1.5, 1.5)
+	level_badge.modulate = Color(2.0, 1.6, 1.0)
+	level_badge_tween = create_tween().set_parallel()
+	level_badge_tween.tween_property(level_badge, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	level_badge_tween.tween_property(level_badge, "modulate", Color.WHITE, 0.8)
