@@ -352,10 +352,12 @@ texture = ExtResource("25_j8jky")
 
 [node name="VirtualJoystick" type="VirtualJoystick" parent="Hud" unique_id=2119331571]
 unique_name_in_owner = true
-offset_left = 1037.0
-offset_top = 550.0
-offset_right = 1077.0
-offset_bottom = 590.0
+offset_left = 640.0
+offset_top = 230.0
+offset_right = 1152.0
+offset_bottom = 648.0
+joystick_mode = 1
+initial_offset_ratio = Vector2(0.8144531, 0.8133971)
 action_left = &"move_left"
 action_right = &"move_right"
 action_up = &"move_up"
