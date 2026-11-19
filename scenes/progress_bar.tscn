@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://bxgd5847pqd2w"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1l3ip"]
+bg_color = Color(0.16, 0.09, 0.05, 0.85)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.08, 0.04, 0.02, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 3.0
+expand_margin_top = 3.0
+expand_margin_right = 3.0
+expand_margin_bottom = 3.0
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 3
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="Gradient" id="Gradient_ember"]
+offsets = PackedFloat32Array(0, 0.3, 0.7, 1)
+colors = PackedColorArray(1, 0.85, 0.5, 1, 1, 0.66, 0.2, 1, 0.91, 0.45, 0.12, 1, 0.7, 0.23, 0.07, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ember"]
+gradient = SubResource("Gradient_ember")
+width = 4
+height = 32
+fill_to = Vector2(0, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tyuhx"]
+texture = SubResource("GradientTexture2D_ember")
+
+[node name="ProgressBar" type="ProgressBar" unique_id=1119924346]
+offset_right = 8.0
+offset_bottom = 24.41325
+theme_override_styles/background = SubResource("StyleBoxFlat_1l3ip")
+theme_override_styles/fill = SubResource("StyleBoxTexture_tyuhx")
+show_percentage = false

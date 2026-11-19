@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://83gntfycntg8"]
+[gd_scene format=3 uid="uid://83gntfycntg8"]
 
 [ext_resource type="Texture2D" uid="uid://qw2h05g71det" path="res://assets/barrel-fire-1.png" id="1_mhtw8"]
 [ext_resource type="Texture2D" uid="uid://bmlk3lr05s5g8" path="res://assets/barrel-fire-2.png" id="2_gdyii"]
@@ -20,11 +20,11 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("4_p63pu")
 }],
-"loop": true,
+"loop": 1,
 "name": &"default",
 "speed": 5.0
 }]
 
-[node name="Barrel" type="AnimatedSprite2D"]
+[node name="Barrel" type="AnimatedSprite2D" unique_id=399903635]
 sprite_frames = SubResource("SpriteFrames_vxglm")
 frame_progress = 0.7250246
