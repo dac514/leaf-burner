@@ -24,14 +24,18 @@ var last_too_many_leaves_message_time: float = -20.0
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var message_bar: MessageBar = %MessageBar
 @onready var joystick: VirtualJoystick = %VirtualJoystick
-@onready var throwButton: TouchScreenButton = %TouchScreenButton
+@onready var throw_button: ThrowButton = %ThrowButton
 
 
 func _ready() -> void:
 	leaf_collection_area.body_entered.connect(_on_leaf_collection_area_body_entered)
-	var is_mobile: bool = DisplayServer.is_touchscreen_available()
+	# Pass `-- --touch-ui` on the command line to test the touch controls with a mouse on desktop
+	var force_touch_ui: bool = "--touch-ui" in OS.get_cmdline_user_args()
+	if force_touch_ui:
+		Input.emulate_touch_from_mouse = true
+	var is_mobile: bool = force_touch_ui or OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 	joystick.visible = is_mobile
-	throwButton.visible = is_mobile
+	throw_button.visible = is_mobile
 
 
 func _physics_process(delta: float) -> void:

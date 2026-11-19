@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/throw_button.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://sejs4cfmtyx" path="res://assets/leaf1.png" id="2_leaf1"]
+[ext_resource type="Texture2D" uid="uid://bxo0e0566wtuw" path="res://assets/leaf2.png" id="3_leaf2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_zone"]
+size = Vector2(560, 448)
+
+[node name="ThrowButton" type="TouchScreenButton"]
+shape = SubResource("RectangleShape2D_zone")
+shape_visible = false
+action = "throw_leaves"
+script = ExtResource("1_script")
+
+[node name="Visual" type="Node2D" parent="."]
+position = Vector2(-185, 146)
+
+[node name="LeafBack" type="Sprite2D" parent="Visual"]
+texture_filter = 2
+position = Vector2(-9, 9)
+rotation = -0.6
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("3_leaf2")
+
+[node name="LeafFront" type="Sprite2D" parent="Visual"]
+texture_filter = 2
+position = Vector2(10, -7)
+rotation = 0.45
+scale = Vector2(1.6, 1.6)
+texture = ExtResource("2_leaf1")

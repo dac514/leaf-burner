@@ -36,6 +36,7 @@
 [ext_resource type="PackedScene" uid="uid://bxgd5847pqd2w" path="res://scenes/progress_bar.tscn" id="24_kmb1v"]
 [ext_resource type="Texture2D" uid="uid://dpxxjjiykgdym" path="res://assets/bush.png" id="24_yq6so"]
 [ext_resource type="Texture2D" uid="uid://cdy733gg62vxc" path="res://assets/GWJ-Half-Logo-Orange.svg" id="25_j8jky"]
+[ext_resource type="PackedScene" path="res://scenes/throw_button.tscn" id="26_throw"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_cjqg0"]
 animations = [{
@@ -166,9 +167,6 @@ outline_color = Color(0.08, 0.04, 0.02, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_85g3d"]
 font_size = 42
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_j8jky"]
-size = Vector2(384, 324)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_furnace_left"]
 size = Vector2(37.5, 800)
@@ -363,11 +361,9 @@ action_right = &"move_right"
 action_up = &"move_up"
 action_down = &""
 
-[node name="TouchScreenButton" type="TouchScreenButton" parent="Hud/VirtualJoystick" unique_id=1696279675]
+[node name="ThrowButton" parent="Hud" unique_id=1696279675 instance=ExtResource("26_throw")]
 unique_name_in_owner = true
-position = Vector2(-844, -66)
-shape = SubResource("RectangleShape2D_j8jky")
-action = "throw_leaves"
+position = Vector2(280, 424)
 
 [node name="Enclosure" type="Node" parent="." unique_id=277144519]
 
