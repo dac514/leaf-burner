@@ -7,6 +7,27 @@ const DECELERATION = 1080.0
 const TOO_MANY_LEAVES_MESSAGE_COOLDOWN: float = 20.0
 const JOYSTICK_DEADZONE := 0.2
 
+# Leaf swirl: a tilted, breathing whirlwind that trails the elf
+const ORBIT_BASE_RADIUS: float = 68.0
+const ORBIT_RADIUS_PER_LEAF: float = 0.35  # Swirl grows as you carry more
+const ORBIT_TILT: float = 0.45  # Squashes the ring into an ellipse for the 3D look
+const ORBIT_CENTER_OFFSET := Vector2(0, 5)  # Main ring circles the waist and legs
+const ORBIT_WOBBLE: float = 6.0
+const ORBIT_FOLLOW_SHARPNESS: float = 14.0  # Higher = leaves keep up more tightly
+const ORBIT_MAX_LAG: float = 70.0  # Never trail further than this behind their spot
+const UPPER_RING_MIN_LEAVES: int = 30  # Carry this many and a second ring forms above the head
+const UPPER_RING_HEIGHT: float = -125.0
+const UPPER_RING_SCALE: float = 0.8
+const UPPER_RING_SPEED: float = 1.5
+
+# Throw: short wind-up, then leaves sling off the front of the swirl one after another
+const WIND_UP_TIME: float = 0.1
+const WIND_UP_SPIN_BOOST: float = 3.5
+const MAX_RELEASE_TIME: float = 0.6
+const THROW_DISTANCE: float = 400.0
+const THROW_SPREAD_DEGREES: float = 15.0
+const THROW_SPIN: float = 12.0  # Max tumble speed of a thrown leaf (rad/s)
+
 @export var max_leaves: int = 100
 @export var max_speed: int = 300
 
@@ -16,6 +37,17 @@ var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var jump_count: int = 0
 var rotation_angle: float = 0.0
 var rotation_speed: float = 5.0
+var spin_boost: float = 1.0
+var swirl_time: float = 0.0
+var is_throwing: bool = false
+var release_active: bool = false
+var release_travel: float = 0.0  # Radians the swirl has turned since release started
+var release_elapsed: float = 0.0
+var release_queue: Array[Dictionary] = []  # {leaf, travel, speed} waiting to reach the release point
+var spin_tween: Tween
+var squash_tween: Tween
+var shake_tween: Tween
+var gust: CPUParticles2D
 
 # Message cooldown tracking
 var last_too_many_leaves_message_time: float = -20.0
@@ -25,6 +57,7 @@ var last_too_many_leaves_message_time: float = -20.0
 @onready var message_bar: MessageBar = %MessageBar
 @onready var joystick: VirtualJoystick = %VirtualJoystick
 @onready var throw_button: ThrowButton = %ThrowButton
+@onready var camera: Camera2D = $Camera2D
 
 
 func _ready() -> void:
@@ -36,6 +69,8 @@ func _ready() -> void:
 	var is_mobile: bool = force_touch_ui or OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 	joystick.visible = is_mobile
 	throw_button.visible = is_mobile
+	gust = _create_gust()
+	add_child(gust)
 
 
 func _physics_process(delta: float) -> void:
@@ -83,12 +118,18 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	collect_leaves(delta)
+	if release_active:
+		_process_release(delta)
 
 
 func _on_leaf_collection_area_body_entered(body: Node2D) -> void:
 	if body is Leaf:
 		var leaf: Leaf = body
-		if collected_leaves.size() < max_leaves and (leaf.current_state == leaf.State.FALLING or leaf.current_state == leaf.State.DROPPED):
+		# Freshly thrown leaves launch from inside the pickup reach, so don't grab them straight back
+		var can_pick_up: bool = leaf.current_state == leaf.State.FALLING or (leaf.current_state == leaf.State.DROPPED and not leaf.is_freshly_thrown())
+		if not can_pick_up:
+			return
+		if collected_leaves.size() < max_leaves:
 			leaf.current_state = leaf.State.FOLLOWING
 			leaf.player_node = self
 			leaf.z_index = 4
@@ -126,91 +167,196 @@ func update_player_outline() -> void:
 	shader_material.set_shader_parameter("width", width_value)
 
 
-## Position collected leaves in a circle around the player
+## Swirl collected leaves around the player like a little whirlwind
 func collect_leaves(delta: float) -> void:
-	var radius := 75.0  # Adjust this radius as needed
-	# Rotate in the direction the player is facing
-	rotation_angle += delta * rotation_speed * facing_direction
+	swirl_time += delta
+	var spin_step: float = delta * rotation_speed * spin_boost
+	rotation_angle += spin_step * facing_direction
+	if release_active:
+		release_travel += spin_step
 
-	# Create a copy of the array to prevent modification during iteration
-	var leaves_to_position: Array[Leaf] = collected_leaves.duplicate()
-	for i in range(leaves_to_position.size()):
-		var leaf: Leaf = leaves_to_position[i]
-		# Check if leaf is still in our collection and valid
-		if leaf != null and is_instance_valid(leaf):
-			var angle := (i / float(leaves_to_position.size())) * 2 * PI + rotation_angle
-			var offset := Vector2(cos(angle), sin(angle)) * radius
-			leaf.global_position = global_position + offset
-
-
-## Throw the leaves away from the player
-func throw_leaves() -> void:
-	# Create a copy to safely iterate while modifying the original array
-	var leaves_to_drop: Array[Leaf] = collected_leaves.duplicate()
-	collected_leaves.clear()
-	update_player_outline()
-
-	for i in range(leaves_to_drop.size()):
-		var leaf: Leaf = leaves_to_drop[i]
-		if leaf == null or not is_instance_valid(leaf):
+	var count: int = collected_leaves.size()
+	var follow: float = 1.0 - exp(-ORBIT_FOLLOW_SHARPNESS * delta)
+	for i in range(count):
+		var leaf: Leaf = collected_leaves[i]
+		# Thrown leaves keep their slot until the throw ends, so the others don't jump around
+		if leaf == null or not is_instance_valid(leaf) or leaf.current_state != Leaf.State.FOLLOWING:
 			continue
+		var angle: float = _orbit_angle(i, count)
+		var target: Vector2 = global_position + _orbit_offset(i, count, angle)
+		# Ease toward the slot so the swirl streams behind while running
+		var next_position: Vector2 = leaf.global_position.lerp(target, follow)
+		var lag: Vector2 = next_position - target
+		if lag.length() > ORBIT_MAX_LAG:
+			next_position = target + lag.normalized() * ORBIT_MAX_LAG
+		leaf.global_position = next_position
 
-		# Store the leaf's current position (where it's rotating around player)
-		var start_position := leaf.global_position
-
-		# Calculate final throw destination
-		var throw_distance := 400.0
-		var throw_angle := randf_range(-15, 15)  # Random angle spread in degrees
-		var throw_angle_rad := deg_to_rad(throw_angle)
-
-		# Calculate throw direction
-		var vertical_component := -0.5
-		var base_direction := Vector2(facing_direction, vertical_component).normalized()
-		var rotated_direction := base_direction.rotated(throw_angle_rad)
-
-		# Calculate the target position for the throw
-		var target_offset := Vector2(facing_direction * 120, -50)
-		var target_position := global_position + target_offset
-
-		# Set leaf state to dropped immediately
-		leaf.current_state = leaf.State.DROPPED
-		leaf.thrown_time_msec = Time.get_ticks_msec()
-		leaf.z_index = 3
-
-		# Small delay between each leaf for staggered effect
-		_animate_leaf_throw(leaf, start_position, target_position, rotated_direction, throw_distance)
-		await get_tree().create_timer(0.005).timeout
+		# Fake depth: the lower half of the ellipse is nearer the camera
+		var depth: float = (sin(angle) + 1.0) * 0.5
+		leaf.z_index = 4 if depth > 0.5 else 0
+		leaf.animated_sprite_2d.scale = Vector2.ONE * lerpf(0.75, 1.2, depth)
+		var shade: float = lerpf(0.6, 1.0, depth)
+		leaf.animated_sprite_2d.modulate = Color(shade, shade, shade)
 
 
-# Animate leaf throwing
-func _animate_leaf_throw(leaf: Leaf, start_pos: Vector2, target_pos: Vector2, throw_direction: Vector2, throw_distance: float) -> void:
-	if leaf == null or not is_instance_valid(leaf):
+func _is_upper_ring(index: int, count: int) -> bool:
+	return count >= UPPER_RING_MIN_LEAVES and index % 3 == 0
+
+
+func _orbit_angle(index: int, count: int) -> float:
+	var spin: float = rotation_angle * (UPPER_RING_SPEED if _is_upper_ring(index, count) else 1.0)
+	return (index / float(count)) * TAU + spin
+
+
+func _orbit_offset(index: int, count: int, angle: float) -> Vector2:
+	var radius: float = ORBIT_BASE_RADIUS + count * ORBIT_RADIUS_PER_LEAF
+	var height: float = 0.0
+	if _is_upper_ring(index, count):
+		radius *= UPPER_RING_SCALE
+		height = UPPER_RING_HEIGHT
+	# Golden-ratio spread gives every leaf a slightly different height and width, so it's a loose band
+	var band: float = fposmod(index * 0.618034, 1.0)
+	radius *= lerpf(1.08, 0.92, band)
+	radius += sin(swirl_time * 3.0 + index * 1.7) * ORBIT_WOBBLE
+	height += lerpf(-12.0, 12.0, band)
+	return ORBIT_CENTER_OFFSET + Vector2(cos(angle) * radius, sin(angle) * radius * ORBIT_TILT + height)
+
+
+## Wind up, then sling the leaves off the front of the swirl
+func throw_leaves() -> void:
+	if is_throwing or collected_leaves.is_empty():
 		return
+	is_throwing = true
 
-	var tween := create_tween()
-	var animation_duration := 0.1
+	# Wind-up: the swirl whips faster while the elf crouches
+	if spin_tween:
+		spin_tween.kill()
+	spin_tween = create_tween()
+	spin_tween.tween_property(self, "spin_boost", WIND_UP_SPIN_BOOST, WIND_UP_TIME).set_ease(Tween.EASE_IN)
+	spin_tween.tween_callback(_start_release)
+	_squash(Vector2(1.12, 0.88), WIND_UP_TIME, Tween.TRANS_SINE)
 
-	# Use a WeakRef to safely reference the leaf
-	var leaf_ref: WeakRef = weakref(leaf)
 
-	# Animate to the throw starting position
-	tween.tween_method(
-		func(pos: Vector2) -> void:
-			var leaf_obj: Leaf = leaf_ref.get_ref()
-			if leaf_obj != null:
-				leaf_obj.global_position = pos,
-		start_pos,
-		target_pos,
-		animation_duration
+func _start_release() -> void:
+	# Leaves fly off one by one as they swing past the front-top of the swirl
+	var release_angle: float = atan2(-0.87, 0.5 * facing_direction)
+	var count: int = collected_leaves.size()
+	release_queue.clear()
+	for i in range(count):
+		var leaf: Leaf = collected_leaves[i]
+		if leaf == null or not is_instance_valid(leaf) or leaf.current_state != Leaf.State.FOLLOWING:
+			continue
+		var speed: float = UPPER_RING_SPEED if _is_upper_ring(i, count) else 1.0
+		var travel: float = fposmod((release_angle - _orbit_angle(i, count)) * facing_direction, TAU)
+		release_queue.append({"leaf": leaf, "travel": travel, "speed": speed})
+	release_travel = 0.0
+	release_elapsed = 0.0
+	release_active = true
+
+	var strength: float = clampf(float(release_queue.size()) / max_leaves, 0.2, 1.0)
+	_squash(Vector2(0.86, 1.16), 0.0, Tween.TRANS_LINEAR)
+	_squash(Vector2.ONE, 0.35, Tween.TRANS_ELASTIC)
+	_shake_camera(lerpf(2.0, 7.0, strength), 0.2)
+	gust.global_position = global_position + Vector2(facing_direction * 45.0, -55.0)
+	gust.direction = Vector2(facing_direction, -0.35)
+	gust.amount = int(lerpf(6.0, 16.0, strength))
+	gust.restart()
+
+
+func _process_release(delta: float) -> void:
+	release_elapsed += delta
+	var force_all: bool = release_elapsed >= MAX_RELEASE_TIME
+	var still_waiting: Array[Dictionary] = []
+	for entry in release_queue:
+		var leaf: Leaf = entry["leaf"]
+		if leaf == null or not is_instance_valid(leaf) or leaf.current_state != Leaf.State.FOLLOWING:
+			continue
+		if force_all or release_travel * float(entry["speed"]) >= float(entry["travel"]):
+			_launch_leaf(leaf)
+		else:
+			still_waiting.append(entry)
+	release_queue = still_waiting
+	if release_queue.is_empty():
+		_finish_throw()
+
+
+func _launch_leaf(leaf: Leaf) -> void:
+	leaf.current_state = leaf.State.DROPPED
+	leaf.thrown_time_msec = Time.get_ticks_msec()
+	leaf.z_index = 3
+	leaf.animated_sprite_2d.scale = Vector2.ONE
+	leaf.animated_sprite_2d.modulate = Color.WHITE
+	leaf.freeze = false  # Unfreeze now so the launch velocity isn't lost
+
+	var spread: float = deg_to_rad(randf_range(-THROW_SPREAD_DEGREES, THROW_SPREAD_DEGREES))
+	var throw_direction: Vector2 = Vector2(facing_direction, -0.5).normalized().rotated(spread)
+	var launch_velocity: Vector2 = throw_direction * THROW_DISTANCE * 3.5 + velocity * 0.3
+	launch_velocity.y = min(launch_velocity.y, -200.0)
+	leaf.linear_velocity = launch_velocity
+	leaf.angular_velocity = randf_range(-THROW_SPIN, THROW_SPIN)
+
+
+func _finish_throw() -> void:
+	release_active = false
+	is_throwing = false
+	# Keep any leaves picked up during the throw; drop the ones that flew off
+	collected_leaves = collected_leaves.filter(
+		func(leaf: Leaf) -> bool: return leaf != null and is_instance_valid(leaf) and leaf.current_state == Leaf.State.FOLLOWING
 	)
+	update_player_outline()
+	if spin_tween:
+		spin_tween.kill()
+	spin_tween = create_tween()
+	spin_tween.tween_property(self, "spin_boost", 1.0, 0.3).set_ease(Tween.EASE_OUT)
 
-	# Apply throw velocity after animation
-	tween.tween_callback(
-		func() -> void:
-			var leaf_obj: Leaf = leaf_ref.get_ref()
-			if leaf_obj != null:
-				var base_throw_velocity := throw_direction * throw_distance * 3.5
-				var combined_velocity := base_throw_velocity + velocity * 0.3
-				combined_velocity.y = min(combined_velocity.y, -200.0)
-				leaf_obj.linear_velocity = combined_velocity
+
+func _squash(target_scale: Vector2, duration: float, transition: Tween.TransitionType) -> void:
+	if squash_tween:
+		squash_tween.kill()
+	if duration <= 0.0:
+		animated_sprite_2d.scale = target_scale
+		return
+	squash_tween = create_tween()
+	squash_tween.tween_property(animated_sprite_2d, "scale", target_scale, duration).set_trans(transition).set_ease(Tween.EASE_OUT)
+
+
+func _shake_camera(strength: float, duration: float) -> void:
+	if shake_tween:
+		shake_tween.kill()
+	shake_tween = create_tween()
+	shake_tween.tween_method(
+		func(progress: float) -> void:
+			var falloff: float = (1.0 - progress) * strength
+			camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * falloff,
+		0.0,
+		1.0,
+		duration
 	)
+	shake_tween.tween_callback(func() -> void: camera.offset = Vector2.ZERO)
+
+
+## A puff of air where the leaves are flung from
+func _create_gust() -> CPUParticles2D:
+	var particles := CPUParticles2D.new()
+	particles.emitting = false
+	particles.one_shot = true
+	particles.explosiveness = 0.85
+	particles.lifetime = 0.45
+	particles.local_coords = false
+	particles.z_index = 3
+	particles.texture = preload("res://assets/smoke_02.png")
+	particles.spread = 28.0
+	particles.gravity = Vector2.ZERO
+	particles.initial_velocity_min = 220.0
+	particles.initial_velocity_max = 420.0
+	particles.damping_min = 500.0
+	particles.damping_max = 700.0
+	particles.scale_amount_min = 0.05
+	particles.scale_amount_max = 0.11
+	particles.angle_min = -180.0
+	particles.angle_max = 180.0
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1.0, 0.97, 0.9, 0.55))
+	fade.set_color(1, Color(1.0, 0.95, 0.85, 0.0))
+	particles.color_ramp = fade
+	return particles
