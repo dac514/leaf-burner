@@ -8,6 +8,8 @@ var current_state: State = State.FALLING
 var player_node: CharacterBody2D
 var follow_speed: float = 100.0
 var spawner: LeafSpawner
+var out_of_bounds_time: float = 0.0
+var is_removing: bool = false
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -48,9 +50,20 @@ func cleanup_leaf() -> void:
 	queue_free()
 
 
+## Quietly fade out and remove a leaf the player can no longer reach (no points awarded)
+func despawn() -> void:
+	if is_removing:
+		return
+	is_removing = true
+	var tween := create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(cleanup_leaf)
+
+
 func try_burn() -> void:
 	# Only burn if we're in DROPPED state
-	if current_state == State.DROPPED:
+	if current_state == State.DROPPED and not is_removing:
+		is_removing = true
 		leaf_burned.emit(self)
 		# Scale and fade before cleanup
 		linear_velocity = Vector2.ZERO

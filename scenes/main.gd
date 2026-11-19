@@ -22,6 +22,9 @@ func _ready() -> void:
 	right_furnace_area.body_entered.connect(_on_furnace_area_body_entered)
 	leaf_spawner.leaf_spawned.connect(_on_leaf_spawned)
 	enemy_spawner.enemy_spawned.connect(_on_enemy_spawned)
+	# The burning barrels mark the edge of the playable area
+	leaf_spawner.left_bound_x = (left_furnace_area.get_parent() as Node2D).global_position.x
+	leaf_spawner.right_bound_x = (right_furnace_area.get_parent() as Node2D).global_position.x
 
 	await get_tree().create_timer(3.0).timeout
 	message_bar.set_text("Burn " + str(win_count) + " leaves to win! ")
