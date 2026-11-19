@@ -18,6 +18,7 @@ var out_of_bounds_time: float = 0.0
 var is_removing: bool = false
 var thrown_time_msec: int = -100000
 var flutter_phase: float = 0.0
+var applied_state: int = -1  # Last state whose physics settings were applied
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -32,6 +33,16 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Apply each state's physics settings once on change. Re-applying them every frame
+	# kept resting leaves awake and cost a handful of deferred calls per leaf per frame.
+	if current_state != applied_state:
+		applied_state = current_state
+		_apply_state()
+	if current_state == State.DROPPED:
+		_animate_flight(delta)
+
+
+func _apply_state() -> void:
 	match current_state:
 		State.FALLING:
 			gravity_scale = 1
@@ -51,7 +62,6 @@ func _physics_process(delta: float) -> void:
 			call_deferred("set_collision_mask_value", 4, true)  # Collide with floors
 			call_deferred("set_collision_mask_value", 5, true)  # Collide with furnaces
 			animated_sprite_2d.pause()
-			_animate_flight(delta)
 
 
 ## Thrown leaves flip over as they fly and glow like embers as they near a barrel

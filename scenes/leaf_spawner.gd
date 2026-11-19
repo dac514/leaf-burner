@@ -19,9 +19,6 @@ var time_since_bounds_check: float = 0.0
 
 
 func _process(delta: float) -> void:
-	# Clean up invalid leaf references
-	active_leaves = active_leaves.filter(func(leaf: Leaf) -> bool: return is_instance_valid(leaf))
-
 	time_since_last_spawn += delta
 	while time_since_last_spawn >= spawn_interval:
 		spawn_leaf()
@@ -52,6 +49,8 @@ func remove_leaf(leaf: Leaf) -> void:
 
 
 func _despawn_out_of_bounds_leaves(elapsed: float) -> void:
+	# Leaves normally remove themselves via remove_leaf(); this just drops any stray freed ones
+	active_leaves = active_leaves.filter(func(leaf: Leaf) -> bool: return is_instance_valid(leaf))
 	for leaf in active_leaves:
 		if leaf.is_removing or leaf.current_state == Leaf.State.FOLLOWING:
 			leaf.out_of_bounds_time = 0.0
