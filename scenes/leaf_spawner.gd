@@ -66,7 +66,12 @@ func remove_leaf(leaf: Leaf) -> void:
 
 func _despawn_out_of_bounds_leaves(elapsed: float) -> void:
 	# Leaves normally remove themselves via remove_leaf(); this just drops any stray freed ones
-	active_leaves = active_leaves.filter(func(leaf: Leaf) -> bool: return is_instance_valid(leaf))
+	var still_alive: Array[Leaf] = []
+	for i in range(active_leaves.size()):
+		var item: Variant = active_leaves[i]
+		if is_instance_valid(item):
+			still_alive.append(item as Leaf)
+	active_leaves = still_alive
 	for leaf in active_leaves:
 		if leaf.is_removing or leaf.current_state == Leaf.State.FOLLOWING:
 			leaf.out_of_bounds_time = 0.0

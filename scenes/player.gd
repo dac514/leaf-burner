@@ -146,6 +146,9 @@ func _on_leaf_collection_area_body_entered(body: Node2D) -> void:
 		var leaf: Leaf = body
 		# Freshly thrown leaves launch from inside the pickup reach, so don't grab them straight back
 		var can_pick_up: bool = leaf.current_state == leaf.State.FALLING or (leaf.current_state == leaf.State.DROPPED and not leaf.is_freshly_thrown())
+		# Leaves that are fading out or burning are about to be freed; carrying one would leave a dead slot
+		if leaf.is_removing:
+			can_pick_up = false
 		if not can_pick_up:
 			return
 		if collected_leaves.size() < max_leaves:
@@ -339,9 +342,13 @@ func _finish_throw() -> void:
 	release_active = false
 	is_throwing = false
 	# Keep any leaves picked up during the throw; drop the ones that flew off
-	collected_leaves = collected_leaves.filter(
-		func(leaf: Leaf) -> bool: return leaf != null and is_instance_valid(leaf) and leaf.current_state == Leaf.State.FOLLOWING
-	)
+	# (Untyped on purpose: a freed leaf can't be passed as a typed Leaf, and that used to break this cleanup)
+	var still_carried: Array[Leaf] = []
+	for i in range(collected_leaves.size()):
+		var item: Variant = collected_leaves[i]
+		if is_instance_valid(item) and (item as Leaf).current_state == Leaf.State.FOLLOWING:
+			still_carried.append(item as Leaf)
+	collected_leaves = still_carried
 	update_player_outline()
 	if spin_tween:
 		spin_tween.kill()
