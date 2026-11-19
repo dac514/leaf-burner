@@ -6,6 +6,9 @@ signal leaf_spawned(leaf: Leaf)
 @export var spawn_interval: float = 0.1  # 10 leaves per second
 ## Seconds a leaf may rest outside the barrels before it is removed
 @export var out_of_bounds_lifetime: float = 60.0
+## Most leaves alive at once. At the cap the oldest resting leaf fades out as each new one
+## spawns, so leaves keep falling but the physics load stops growing (provisional, tune on device)
+@export var max_active_leaves: int = 350
 
 var active_leaves: Array[Leaf] = []
 var left_wall_x: float = -911.25
@@ -32,6 +35,8 @@ func _process(delta: float) -> void:
 
 
 func spawn_leaf() -> void:
+	if active_leaves.size() >= max_active_leaves:
+		_recycle_oldest_leaf()
 	if leaf_scene:
 		var leaf: Leaf = leaf_scene.instantiate()
 		var random_x := randf_range(left_wall_x, right_wall_x)
@@ -42,6 +47,17 @@ func spawn_leaf() -> void:
 
 		# Emit signal to let main scene handle the connection
 		leaf_spawned.emit(leaf)
+
+
+## active_leaves is in spawn order, so the first leaf that's just lying around is the oldest
+func _recycle_oldest_leaf() -> void:
+	for leaf in active_leaves:
+		if not is_instance_valid(leaf) or leaf.is_removing or leaf.current_state == Leaf.State.FOLLOWING:
+			continue
+		if leaf.is_freshly_thrown():
+			continue
+		leaf.despawn()
+		return
 
 
 func remove_leaf(leaf: Leaf) -> void:
