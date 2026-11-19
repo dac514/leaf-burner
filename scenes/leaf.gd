@@ -25,6 +25,8 @@ var applied_state: int = -1  # Last state whose physics settings were applied
 
 func _ready() -> void:
 	animated_sprite_2d.frame = randi() % 2
+	# Flat leaves come to rest level, so tilt the art a little for a natural-looking pile
+	animated_sprite_2d.rotation = randf_range(-0.6, 0.6)
 	animated_sprite_2d.pause()
 	freeze = false
 	gravity_scale = 1
@@ -51,6 +53,7 @@ func _apply_state() -> void:
 			gravity_scale = 0
 			linear_velocity = Vector2.ZERO
 			call_deferred("set_collision_layer_value", 2, false)  # Remove from leaf layer
+			call_deferred("set_collision_mask_value", 2, false)  # Don't plough through resting leaves
 			call_deferred("set_collision_mask_value", 4, false)  # Don't collide with floors
 			call_deferred("set_collision_mask_value", 5, false)  # Don't collide with furnaces
 			animated_sprite_2d.play()
@@ -59,6 +62,7 @@ func _apply_state() -> void:
 			gravity_scale = 1
 			call_deferred("set", "freeze", false)
 			call_deferred("set_collision_layer_value", 2, true)  # Back to leaf layer
+			call_deferred("set_collision_mask_value", 2, true)  # Land on other leaves again
 			call_deferred("set_collision_mask_value", 4, true)  # Collide with floors
 			call_deferred("set_collision_mask_value", 5, true)  # Collide with furnaces
 			animated_sprite_2d.pause()
