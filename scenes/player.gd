@@ -13,8 +13,11 @@ const ORBIT_RADIUS_PER_LEAF: float = 0.35  # Swirl grows as you carry more
 const ORBIT_TILT: float = 0.45  # Squashes the ring into an ellipse for the 3D look
 const ORBIT_CENTER_OFFSET := Vector2(0, 5)  # Main ring circles the waist and legs
 const ORBIT_WOBBLE: float = 6.0
-const ORBIT_FOLLOW_SHARPNESS: float = 14.0  # Higher = leaves keep up more tightly
-const ORBIT_MAX_LAG: float = 70.0  # Never trail further than this behind their spot
+const ORBIT_FOLLOW_SHARPNESS: float = 14.0  # Higher = leaves settle into their spots faster
+const ORBIT_MAX_LAG: float = 70.0  # Never sit further than this from their spot
+const ORBIT_TRAIL_PER_SPEED: float = 0.04  # Swirl leans behind the elf by this much per px/s of speed
+const ORBIT_MAX_TRAIL: float = 18.0  # Cap on the lean, so the elf stays centred even at top speed
+const UPPER_RING_TRAIL_SCALE: float = 1.6  # Upper ring leans a bit more, like a bending tornado
 const UPPER_RING_MIN_LEAVES: int = 30  # Carry this many and a second ring forms above the head
 const UPPER_RING_HEIGHT: float = -125.0
 const UPPER_RING_SCALE: float = 0.8
@@ -39,6 +42,7 @@ var rotation_angle: float = 0.0
 var rotation_speed: float = 5.0
 var spin_boost: float = 1.0
 var swirl_time: float = 0.0
+var swirl_origin: Vector2  # Player position last frame, used to carry the swirl along
 var is_throwing: bool = false
 var release_active: bool = false
 var release_travel: float = 0.0  # Radians the swirl has turned since release started
@@ -69,6 +73,7 @@ func _ready() -> void:
 	var is_mobile: bool = force_touch_ui or OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 	joystick.visible = is_mobile
 	throw_button.visible = is_mobile
+	swirl_origin = global_position
 	gust = _create_gust()
 	add_child(gust)
 
@@ -177,15 +182,20 @@ func collect_leaves(delta: float) -> void:
 
 	var count: int = collected_leaves.size()
 	var follow: float = 1.0 - exp(-ORBIT_FOLLOW_SHARPNESS * delta)
+	# Carry leaves with the elf fully, so speed never leaves him at the front of the swirl
+	var carried: Vector2 = global_position - swirl_origin
+	swirl_origin = global_position
+	var trail: Vector2 = (-velocity * ORBIT_TRAIL_PER_SPEED).limit_length(ORBIT_MAX_TRAIL)
 	for i in range(count):
 		var leaf: Leaf = collected_leaves[i]
 		# Thrown leaves keep their slot until the throw ends, so the others don't jump around
 		if leaf == null or not is_instance_valid(leaf) or leaf.current_state != Leaf.State.FOLLOWING:
 			continue
 		var angle: float = _orbit_angle(i, count)
-		var target: Vector2 = global_position + _orbit_offset(i, count, angle)
-		# Ease toward the slot so the swirl streams behind while running
-		var next_position: Vector2 = leaf.global_position.lerp(target, follow)
+		var lean: Vector2 = trail * (UPPER_RING_TRAIL_SCALE if _is_upper_ring(i, count) else 1.0)
+		var target: Vector2 = global_position + _orbit_offset(i, count, angle) + lean
+		# Ease toward the slot so new leaves swoop in and the swirl stays soft
+		var next_position: Vector2 = (leaf.global_position + carried).lerp(target, follow)
 		var lag: Vector2 = next_position - target
 		if lag.length() > ORBIT_MAX_LAG:
 			next_position = target + lag.normalized() * ORBIT_MAX_LAG
