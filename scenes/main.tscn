@@ -37,6 +37,7 @@
 [ext_resource type="Texture2D" uid="uid://dpxxjjiykgdym" path="res://assets/bush.png" id="24_yq6so"]
 [ext_resource type="Texture2D" uid="uid://cdy733gg62vxc" path="res://assets/GWJ-Half-Logo-Orange.svg" id="25_j8jky"]
 [ext_resource type="PackedScene" path="res://scenes/throw_button.tscn" id="26_throw"]
+[ext_resource type="Script" path="res://scenes/virtual_joystick.gd" id="27_joystick"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_cjqg0"]
 animations = [{
@@ -358,6 +359,7 @@ offset_right = 1152.0
 offset_bottom = 648.0
 joystick_mode = 1
 initial_offset_ratio = Vector2(0.8144531, 0.8133971)
+script = ExtResource("27_joystick")
 action_left = &"move_left"
 action_right = &"move_right"
 action_up = &"move_up"
