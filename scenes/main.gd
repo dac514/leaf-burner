@@ -191,10 +191,9 @@ func _emit_sparks(at: Vector2) -> void:
 
 
 ## Debug readout for tuning on devices: fps, live leaves, active renderer.
-## Shown in debug builds on phones/tablets, or on desktop with `-- --show-fps`.
+## Hidden unless the game is run with `-- --show-fps` (desktop).
 func _create_perf_overlay() -> void:
-	var on_mobile_debug: bool = OS.is_debug_build() and OS.has_feature("mobile")
-	if not on_mobile_debug and not "--show-fps" in OS.get_cmdline_user_args():
+	if not "--show-fps" in OS.get_cmdline_user_args():
 		return
 	perf_label = Label.new()
 	perf_label.position = Vector2(16, 150)
