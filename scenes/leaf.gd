@@ -10,6 +10,7 @@ var follow_speed: float = 100.0
 var spawner: LeafSpawner
 var out_of_bounds_time: float = 0.0
 var is_removing: bool = false
+var thrown_time_msec: int = -100000
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -42,6 +43,11 @@ func _physics_process(_delta: float) -> void:
 			call_deferred("set_collision_mask_value", 4, true)  # Collide with floors
 			call_deferred("set_collision_mask_value", 5, true)  # Collide with furnaces
 			animated_sprite_2d.pause()
+
+
+## True for a little while after the player throws this leaf (while it's still in flight)
+func is_freshly_thrown() -> bool:
+	return current_state == State.DROPPED and Time.get_ticks_msec() - thrown_time_msec < 1500
 
 
 func cleanup_leaf() -> void:

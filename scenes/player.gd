@@ -174,6 +174,7 @@ func throw_leaves() -> void:
 
 		# Set leaf state to dropped immediately
 		leaf.current_state = leaf.State.DROPPED
+		leaf.thrown_time_msec = Time.get_ticks_msec()
 		leaf.z_index = 3
 
 		# Small delay between each leaf for staggered effect
