@@ -1,5 +1,7 @@
 extends Node
 
+const SPARK_EMITTER_COUNT: int = 10
+
 @export var win_count: int = 250
 
 var burning_count: int = 0
@@ -11,6 +13,8 @@ var level_start: int = 0  # Score where the current level's progress bar starts
 var progress_tween: Tween
 var progress_level_up_playing: bool = false
 var level_badge_tween: Tween
+var spark_emitters: Array[CPUParticles2D] = []
+var next_spark_emitter: int = 0
 
 @onready var burning_leaves_label: Label = %BurningLeaves
 @onready var progress_bar: ProgressBar = %ProgressBar
@@ -32,6 +36,7 @@ func _ready() -> void:
 	# The burning barrels mark the edge of the playable area
 	leaf_spawner.left_bound_x = (left_furnace_area.get_parent() as Node2D).global_position.x
 	leaf_spawner.right_bound_x = (right_furnace_area.get_parent() as Node2D).global_position.x
+	_create_spark_emitters()
 
 	await get_tree().create_timer(3.0).timeout
 	message_bar.set_text("Burn " + str(win_count) + " leaves to win! ")
@@ -71,7 +76,9 @@ func _on_enemy_spawned(enemy: Enemy) -> void:
 	enemy.enemy_hit_player.connect(_on_enemy_hit_player)
 
 
-func _on_leaf_burned(_leaf: Leaf) -> void:
+func _on_leaf_burned(leaf: Leaf) -> void:
+	if leaf:
+		_emit_sparks(leaf.global_position)
 	burning_count += 1
 	burning_leaves_label.text = str(burning_count)
 	_update_progress_bar()
@@ -140,3 +147,39 @@ func _show_level() -> void:
 	level_badge_tween = create_tween().set_parallel()
 	level_badge_tween.tween_property(level_badge, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	level_badge_tween.tween_property(level_badge, "modulate", Color.WHITE, 0.8)
+
+
+## A small pool of one-shot emitters reused round-robin, so a burst of burns stays cheap on mobile
+func _create_spark_emitters() -> void:
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1.0, 0.95, 0.6, 1.0))
+	fade.add_point(0.4, Color(1.0, 0.55, 0.15, 1.0))
+	fade.set_color(2, Color(0.8, 0.15, 0.05, 0.0))
+	for i in range(SPARK_EMITTER_COUNT):
+		var sparks := CPUParticles2D.new()
+		sparks.emitting = false
+		sparks.one_shot = true
+		sparks.amount = 6
+		sparks.explosiveness = 1.0
+		sparks.lifetime = 0.7
+		sparks.local_coords = false
+		sparks.z_index = 4
+		sparks.direction = Vector2.UP
+		sparks.spread = 55.0
+		sparks.gravity = Vector2(0, -60)  # Embers drift upward
+		sparks.initial_velocity_min = 90.0
+		sparks.initial_velocity_max = 240.0
+		sparks.damping_min = 60.0
+		sparks.damping_max = 120.0
+		sparks.scale_amount_min = 2.5
+		sparks.scale_amount_max = 4.5
+		sparks.color_ramp = fade
+		add_child(sparks)
+		spark_emitters.append(sparks)
+
+
+func _emit_sparks(at: Vector2) -> void:
+	var sparks: CPUParticles2D = spark_emitters[next_spark_emitter]
+	next_spark_emitter = (next_spark_emitter + 1) % spark_emitters.size()
+	sparks.global_position = at
+	sparks.restart()

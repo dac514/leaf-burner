@@ -4,6 +4,12 @@ signal leaf_burned(leaf: Leaf)
 
 enum State { FALLING, FOLLOWING, DROPPED }
 
+const FLUTTER_SPEED: float = 9.0  # How fast a thrown leaf flips over in flight
+const FLUTTER_MIN_SPEED: float = 80.0  # Below this the leaf settles flat
+const EMBER_GLOW_DISTANCE: float = 260.0  # Thrown leaves start glowing this close to a barrel
+const EMBER_COLOR := Color(2.0, 1.1, 0.45)
+const BURN_FLASH_COLOR := Color(2.4, 1.4, 0.6)
+
 var current_state: State = State.FALLING
 var player_node: CharacterBody2D
 var follow_speed: float = 100.0
@@ -11,6 +17,7 @@ var spawner: LeafSpawner
 var out_of_bounds_time: float = 0.0
 var is_removing: bool = false
 var thrown_time_msec: int = -100000
+var flutter_phase: float = 0.0
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -21,9 +28,10 @@ func _ready() -> void:
 	freeze = false
 	gravity_scale = 1
 	z_index = 3
+	flutter_phase = randf() * TAU
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	match current_state:
 		State.FALLING:
 			gravity_scale = 1
@@ -43,6 +51,31 @@ func _physics_process(_delta: float) -> void:
 			call_deferred("set_collision_mask_value", 4, true)  # Collide with floors
 			call_deferred("set_collision_mask_value", 5, true)  # Collide with furnaces
 			animated_sprite_2d.pause()
+			_animate_flight(delta)
+
+
+## Thrown leaves flip over as they fly and glow like embers as they near a barrel
+func _animate_flight(delta: float) -> void:
+	if is_removing:
+		return
+	var sprite_scale: Vector2 = animated_sprite_2d.scale
+	var speed: float = linear_velocity.length()
+	if speed > FLUTTER_MIN_SPEED:
+		# Squeezing scale.x through zero fakes a leaf turning over in 3D; slower leaves flutter slower
+		flutter_phase += delta * FLUTTER_SPEED * clampf(speed / 600.0, 0.4, 1.5)
+		var flip: float = cos(flutter_phase)
+		sprite_scale.x = flip if absf(flip) > 0.15 else (0.15 if flip >= 0.0 else -0.15)
+		animated_sprite_2d.scale = sprite_scale
+	elif absf(sprite_scale.x) < 1.0:
+		sprite_scale.x = move_toward(sprite_scale.x, 1.0 if sprite_scale.x >= 0.0 else -1.0, delta * 4.0)
+		animated_sprite_2d.scale = sprite_scale
+
+	if is_freshly_thrown() and spawner:
+		var distance_to_barrel: float = minf(global_position.x - spawner.left_bound_x, spawner.right_bound_x - global_position.x)
+		var glow: float = clampf(1.0 - distance_to_barrel / EMBER_GLOW_DISTANCE, 0.0, 1.0)
+		animated_sprite_2d.modulate = Color.WHITE.lerp(EMBER_COLOR, glow)
+	elif animated_sprite_2d.modulate != Color.WHITE:
+		animated_sprite_2d.modulate = animated_sprite_2d.modulate.lerp(Color.WHITE, minf(delta * 4.0, 1.0))
 
 
 ## True for a little while after the player throws this leaf (while it's still in flight)
@@ -74,6 +107,7 @@ func try_burn() -> void:
 		# Scale and fade before cleanup
 		linear_velocity = Vector2.ZERO
 		angular_velocity = 0.0
+		animated_sprite_2d.modulate = BURN_FLASH_COLOR
 		var tween := create_tween()
 		tween.tween_property(self, "scale", Vector2(2.25, 2.25), 0.15)
 		tween.tween_property(self, "modulate:a", 0.0, 0.15)
